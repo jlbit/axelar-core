@@ -50,20 +50,21 @@ func (s msgServer) Vote(c context.Context, req *types.VoteRequest) (*types.VoteR
 		return nil, err
 	}
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(types.EventType,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueVote),
-			sdk.NewAttribute(types.AttributeKeyPoll, string(types.ModuleCdc.MustMarshalJSON(&req.PollKey))),
-			sdk.NewAttribute(types.AttributeKeyVoter, req.Sender.String()),
-		),
+	event := sdk.NewEvent(types.EventType,
+		sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+		sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueVote),
+		sdk.NewAttribute(types.AttributeKeyPoll, string(types.ModuleCdc.MustMarshalJSON(&req.PollKey))),
+		sdk.NewAttribute(types.AttributeKeyVoter, req.Sender.String()),
 	)
+	defer func() { ctx.EventManager().EmitEvent(event) }()
 
 	if poll.Is(vote.Pending) {
+		event = event.AppendAttributes(sdk.NewAttribute(types.AttributeKeyPollState, vote.Pending.String()))
 		return &types.VoteResponse{Log: fmt.Sprintf("not enough votes to confirm poll %s yet", poll.GetKey())}, nil
 	}
 
 	if poll.Is(vote.Failed) {
+		event = event.AppendAttributes(sdk.NewAttribute(types.AttributeKeyPollState, vote.Failed.String()))
 		return &types.VoteResponse{Log: fmt.Sprintf("poll %s failed", poll.GetKey())}, nil
 	}
 
@@ -72,6 +73,7 @@ func (s msgServer) Vote(c context.Context, req *types.VoteRequest) (*types.VoteR
 		return nil, fmt.Errorf("result of poll %s has wrong type, expected VoteConfirmDepositRequest_Vote, got %T", poll.GetKey().String(), poll.GetResult())
 	}
 
+	event = event.AppendAttributes(sdk.NewAttribute(types.AttributeKeyPollState, vote.Completed.String()))
 	if len(result.Results) == 0 {
 		poll.AllowOverride()
 		return &types.VoteResponse{Log: fmt.Sprintf("poll %s failed to decide anything", poll.GetKey())}, nil

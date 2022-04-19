@@ -1592,6 +1592,28 @@ func (m Event) ValidateBasic() error {
 	return nil
 }
 
+// GetEventType returns the type for the event
+func (m Event) GetEventType() string {
+	switch m.GetEvent().(type) {
+	case *Event_ContractCall:
+		return "contractCall"
+	case *Event_ContractCallWithToken:
+		return "contractCallWithToken"
+	case *Event_TokenSent:
+		return "tokenSent"
+	case *Event_Transfer:
+		return "transfer"
+	case *Event_TokenDeployed:
+		return "tokenDeployed"
+	case *Event_MultisigOwnershipTransferred:
+		return "multisigOwnershipTransferred"
+	case *Event_MultisigOperatorshipTransferred:
+		return "multisigOperatorshipTransferred"
+	default:
+		return ""
+	}
+}
+
 // ValidateBasic returns an error if the event token sent is invalid
 func (m EventTokenSent) ValidateBasic() error {
 	if m.Sender.IsZeroAddress() {
@@ -1865,4 +1887,15 @@ func PackEvents(events []Event) ([]*codectypes.Any, error) {
 	}
 
 	return eventsAny, nil
+}
+
+// GetMultisigAddresses coverts a tss multisig key to addresses
+func GetMultisigAddresses(key tss.Key) ([]common.Address, uint8, error) {
+	multisigPubKeys, err := key.GetMultisigPubKey()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	threshold := uint8(key.GetMultisigKey().Threshold)
+	return KeysToAddresses(multisigPubKeys...), threshold, nil
 }
