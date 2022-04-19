@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	fakeMock "github.com/axelarnetwork/axelar-core/testutils/fake/interfaces/mock"
+
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
