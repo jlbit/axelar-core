@@ -46,7 +46,8 @@ message Event {
 message EventTokenSent {
   bytes sender = 1
       [ (gogoproto.nullable) = false, (gogoproto.customtype) = "Address" ];
-  string destination_chain = 2;
+  string destination_chain = 2 [ (gogoproto.casttype) = "ChainName" ];
+  ;
   string destination_address = 3;
   string symbol = 4;
   bytes amount = 5 [
@@ -58,7 +59,7 @@ message EventTokenSent {
 message EventContractCall {
   bytes sender = 1
       [ (gogoproto.nullable) = false, (gogoproto.customtype) = "Address" ];
-  string destination_chain = 2;
+  string destination_chain = 2 [ (gogoproto.casttype) = "ChainName" ];
   string contract_address = 3;
   bytes payload_hash = 4
       [ (gogoproto.nullable) = false, (gogoproto.customtype) = "Hash" ];
@@ -67,7 +68,7 @@ message EventContractCall {
 message EventContractCallWithToken {
   bytes sender = 1
       [ (gogoproto.nullable) = false, (gogoproto.customtype) = "Address" ];
-  string destination_chain = 2;
+  string destination_chain = 2 [ (gogoproto.casttype) = "ChainName" ];
   string contract_address = 3;
   bytes payload_hash = 4
       [ (gogoproto.nullable) = false, (gogoproto.customtype) = "Hash" ];

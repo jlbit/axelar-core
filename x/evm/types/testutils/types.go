@@ -358,7 +358,7 @@ func RandomEvent(statuses ...types.Event_Status) types.Event {
 			Event: &types.Event_ContractCall{
 				ContractCall: &types.EventContractCall{
 					Sender:           RandomAddress(),
-					DestinationChain: randomNormalizedStr(5, 20),
+					DestinationChain: types.ChainName(randomNormalizedStr(5, 20)),
 					ContractAddress:  RandomAddress().Hex(),
 					PayloadHash:      types.Hash(crypto.Keccak256Hash(payload)),
 				},
@@ -372,7 +372,7 @@ func RandomEvent(statuses ...types.Event_Status) types.Event {
 			Event: &types.Event_ContractCallWithToken{
 				ContractCallWithToken: &types.EventContractCallWithToken{
 					Sender:           RandomAddress(),
-					DestinationChain: randomNormalizedStr(5, 20),
+					DestinationChain: types.ChainName(randomNormalizedStr(5, 20)),
 					ContractAddress:  RandomAddress().Hex(),
 					PayloadHash:      types.Hash(crypto.Keccak256Hash(payload)),
 					Symbol:           randomNormalizedStr(5, 20),
@@ -388,7 +388,7 @@ func RandomEvent(statuses ...types.Event_Status) types.Event {
 			Event: &types.Event_TokenSent{
 				TokenSent: &types.EventTokenSent{
 					Sender:             RandomAddress(),
-					DestinationChain:   randomNormalizedStr(5, 20),
+					DestinationChain:   types.ChainName(randomNormalizedStr(5, 20)),
 					DestinationAddress: RandomAddress().Hex(),
 					Symbol:             randomNormalizedStr(5, 20),
 					Amount:             sdk.NewUint(uint64(rand.PosI64())),

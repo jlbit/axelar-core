@@ -341,6 +341,12 @@ func (mgr Mgr) ProcessGatewayTxConfirmation(e tmEvents.Event) error {
 					return false
 				}
 
+				err = event.DestinationChain.Validate()
+				if err != nil {
+					mgr.logger.Debug(sdkerrors.Wrap(err, "invalid event ContractCall").Error())
+					continue
+				}
+
 				events = append(events, evmTypes.Event{
 					Chain: chain,
 					TxId:  evmTypes.Hash(txID),
@@ -357,6 +363,12 @@ func (mgr Mgr) ProcessGatewayTxConfirmation(e tmEvents.Event) error {
 					return false
 				}
 
+				err = event.DestinationChain.Validate()
+				if err != nil {
+					mgr.logger.Debug(sdkerrors.Wrap(err, "invalid event ContractCallWithToken").Error())
+					continue
+				}
+
 				events = append(events, evmTypes.Event{
 					Chain: chain,
 					TxId:  evmTypes.Hash(txID),
@@ -369,6 +381,12 @@ func (mgr Mgr) ProcessGatewayTxConfirmation(e tmEvents.Event) error {
 				event, err := decodeEventTokenSent(log)
 				if err != nil {
 					mgr.logger.Debug(sdkerrors.Wrap(err, "decode event TokenSent failed").Error())
+				}
+
+				err = event.DestinationChain.Validate()
+				if err != nil {
+					mgr.logger.Debug(sdkerrors.Wrap(err, "invalid event TokenSent").Error())
+					continue
 				}
 
 				events = append(events, evmTypes.Event{
@@ -420,7 +438,7 @@ func decodeEventTokenSent(log *geth.Log) (evmTypes.EventTokenSent, error) {
 
 	return evmTypes.EventTokenSent{
 		Sender:             evmTypes.Address(common.BytesToAddress(log.Topics[1].Bytes())),
-		DestinationChain:   params[0].(string),
+		DestinationChain:   evmTypes.ChainName(params[0].(string)),
 		DestinationAddress: params[1].(string),
 		Symbol:             params[2].(string),
 		Amount:             sdk.NewUintFromBigInt(params[3].(*big.Int)),
@@ -450,7 +468,7 @@ func decodeEventContractCall(log *geth.Log) (evmTypes.EventContractCall, error) 
 
 	return evmTypes.EventContractCall{
 		Sender:           evmTypes.Address(common.BytesToAddress(log.Topics[1].Bytes())),
-		DestinationChain: params[0].(string),
+		DestinationChain: evmTypes.ChainName(params[0].(string)),
 		ContractAddress:  params[1].(string),
 		PayloadHash:      evmTypes.Hash(common.BytesToHash(log.Topics[2].Bytes())),
 	}, nil
@@ -486,7 +504,7 @@ func decodeEventContractCallWithToken(log *geth.Log) (evmTypes.EventContractCall
 
 	return evmTypes.EventContractCallWithToken{
 		Sender:           evmTypes.Address(common.BytesToAddress(log.Topics[1].Bytes())),
-		DestinationChain: params[0].(string),
+		DestinationChain: evmTypes.ChainName(params[0].(string)),
 		ContractAddress:  params[1].(string),
 		PayloadHash:      evmTypes.Hash(common.BytesToHash(log.Topics[2].Bytes())),
 		Symbol:           params[3].(string),

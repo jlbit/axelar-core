@@ -37,7 +37,7 @@ func handleTokenSent(ctx sdk.Context, event types.Event, bk types.BaseKeeper, n 
 		panic(fmt.Errorf("event is nil"))
 	}
 
-	sourceChain, destinationChain, err := validateChains(ctx, event.Chain, e.DestinationChain, bk, n)
+	sourceChain, destinationChain, err := validateChains(ctx, event.Chain, e.DestinationChain.String(), bk, n)
 	if err != nil {
 		bk.Logger(ctx).Info(err.Error())
 		return false
@@ -81,7 +81,7 @@ func handleContractCall(ctx sdk.Context, event types.Event, bk types.BaseKeeper,
 		panic(fmt.Errorf("event is nil"))
 	}
 
-	sourceChain, destinationChain, err := validateChains(ctx, event.Chain, e.DestinationChain, bk, n)
+	sourceChain, destinationChain, err := validateChains(ctx, event.Chain, e.DestinationChain.String(), bk, n)
 	if err != nil {
 		bk.Logger(ctx).Info(err.Error())
 		return false
@@ -130,7 +130,7 @@ func handleContractCallWithToken(ctx sdk.Context, event types.Event, bk types.Ba
 		panic(fmt.Errorf("event is nil"))
 	}
 
-	sourceChain, destinationChain, err := validateChains(ctx, event.Chain, e.DestinationChain, bk, n)
+	sourceChain, destinationChain, err := validateChains(ctx, event.Chain, e.DestinationChain.String(), bk, n)
 	if err != nil {
 		bk.Logger(ctx).Info(err.Error())
 		return false
@@ -213,7 +213,7 @@ func handleConfirmedEvents(ctx sdk.Context, bk types.BaseKeeper, n types.Nexus, 
 	shouldHandleEvent := func(e codec.ProtoMarshaler) bool {
 		event := e.(*types.Event)
 
-		var destinationChainName string
+		var destinationChainName types.ChainName
 		switch event := event.GetEvent().(type) {
 		case *types.Event_ContractCall:
 			destinationChainName = event.ContractCall.DestinationChain
@@ -226,12 +226,12 @@ func handleConfirmedEvents(ctx sdk.Context, bk types.BaseKeeper, n types.Nexus, 
 		}
 
 		// would handle event as failure if destination chain is not registered
-		destinationChain, ok := n.GetChain(ctx, destinationChainName)
+		destinationChain, ok := n.GetChain(ctx, destinationChainName.String())
 		if !ok {
 			return true
 		}
 		// would handle event as failure if destination chain is not an evm chain
-		if !bk.HasChain(ctx, destinationChainName) {
+		if !bk.HasChain(ctx, destinationChainName.String()) {
 			return true
 		}
 		// skip if destination chain is not activated
@@ -239,7 +239,7 @@ func handleConfirmedEvents(ctx sdk.Context, bk types.BaseKeeper, n types.Nexus, 
 			return false
 		}
 		// skip if destination chain has not got gateway set yet
-		if _, ok := bk.ForChain(destinationChainName).GetGatewayAddress(ctx); !ok {
+		if _, ok := bk.ForChain(destinationChainName.String()).GetGatewayAddress(ctx); !ok {
 			return false
 		}
 		// skip if destination chain has the secondary key rotation in progress

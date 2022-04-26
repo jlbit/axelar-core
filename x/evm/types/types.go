@@ -1598,7 +1598,7 @@ func (m EventTokenSent) ValidateBasic() error {
 		return fmt.Errorf("invalid sender")
 	}
 
-	if err := utils.ValidateString(m.DestinationChain); err != nil {
+	if err := m.DestinationChain.Validate(); err != nil {
 		return sdkerrors.Wrap(err, "invalid destination chain")
 	}
 
@@ -1623,7 +1623,7 @@ func (m EventContractCall) ValidateBasic() error {
 		return fmt.Errorf("invalid sender")
 	}
 
-	if err := utils.ValidateString(m.DestinationChain); err != nil {
+	if err := m.DestinationChain.Validate(); err != nil {
 		return sdkerrors.Wrap(err, "invalid destination chain")
 	}
 
@@ -1644,7 +1644,7 @@ func (m EventContractCallWithToken) ValidateBasic() error {
 		return fmt.Errorf("invalid sender")
 	}
 
-	if err := utils.ValidateString(m.DestinationChain); err != nil {
+	if err := m.DestinationChain.Validate(); err != nil {
 		return sdkerrors.Wrap(err, "invalid destination chain")
 	}
 
@@ -1865,4 +1865,27 @@ func PackEvents(events []Event) ([]*codectypes.Any, error) {
 	}
 
 	return eventsAny, nil
+}
+
+// ChainNameLengthMax bounds the max chain name length
+const ChainNameLengthMax = 40
+
+// ChainName ensures a correctly formatted EVM chain name
+type ChainName string
+
+// Validate returns an error, if the key ID is too short or too long
+func (c ChainName) Validate() error {
+	if err := utils.ValidateString(string(c)); err != nil {
+		return sdkerrors.Wrap(err, "invalid chain name")
+	}
+
+	if len(c) > ChainNameLengthMax {
+		return fmt.Errorf("chain name length %d is greater than %d", len(c), ChainNameLengthMax)
+	}
+
+	return nil
+}
+
+func (c ChainName) String() string {
+	return string(c)
 }
