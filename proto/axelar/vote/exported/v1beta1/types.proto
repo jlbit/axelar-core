@@ -44,6 +44,8 @@ message PollMetadata {
     (gogoproto.nullable) = false
   ];
   string reward_pool_name = 10;
+  uint64 grace_period = 11;
+  int64 completed_at = 12;
 }
 
 enum PollState {

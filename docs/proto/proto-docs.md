@@ -481,6 +481,7 @@
   
 - [axelar/vote/v1beta1/types.proto](#axelar/vote/v1beta1/types.proto)
     - [TalliedVote](#axelar.vote.v1beta1.TalliedVote)
+    - [VoteRecord](#axelar.vote.v1beta1.VoteRecord)
   
 - [Scalar Value Types](#scalar-value-types)
 
@@ -2331,6 +2332,8 @@ vote can have any data type
 | `voters` | [Voter](#axelar.vote.exported.v1beta1.Voter) | repeated |  |
 | `total_voting_power` | [bytes](#bytes) |  |  |
 | `reward_pool_name` | [string](#string) |  |  |
+| `grace_period` | [uint64](#uint64) |  |  |
+| `completed_at` | [int64](#int64) |  |  |
 
 
 
@@ -6837,6 +6840,22 @@ validators voting for the same data
 | `tally` | [bytes](#bytes) |  |  |
 | `voters` | [bytes](#bytes) | repeated |  |
 | `data` | [google.protobuf.Any](#google.protobuf.Any) |  |  |
+
+
+
+
+
+
+<a name="axelar.vote.v1beta1.VoteRecord"></a>
+
+### VoteRecord
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `voter` | [bytes](#bytes) |  |  |
+| `isLate` | [bool](#bool) |  |  |
 
 
 

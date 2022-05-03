@@ -36,45 +36,41 @@ func (s msgServer) Vote(c context.Context, req *types.VoteRequest) (*types.VoteR
 	}
 
 	poll := s.GetPoll(ctx, req.PollKey)
-
-	switch {
-	case poll.Is(vote.Expired):
-		return &types.VoteResponse{Log: fmt.Sprintf("vote for poll %s already %s", req.PollKey, vote.Expired.String())}, nil
-	case poll.Is(vote.Failed), poll.Is(vote.Completed):
-		// If the voting threshold has been met and additional votes are received they should not return an error
-		return &types.VoteResponse{Log: fmt.Sprintf("vote for poll %s already %s", req.PollKey, vote.Completed.String())}, nil
-	default:
-	}
-
-	if err := poll.Vote(voter, &req.Vote); err != nil {
+	result, voted, err := poll.Vote(voter, ctx.BlockHeight(), &req.Vote)
+	if err != nil {
 		return nil, err
 	}
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(types.EventType,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueVote),
-			sdk.NewAttribute(types.AttributeKeyPoll, string(types.ModuleCdc.MustMarshalJSON(&req.PollKey))),
-			sdk.NewAttribute(types.AttributeKeyVoter, req.Sender.String()),
-		),
-	)
+	if voted {
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(types.EventType,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
+				sdk.NewAttribute(sdk.AttributeKeyAction, types.AttributeValueVote),
+				sdk.NewAttribute(types.AttributeKeyPoll, string(types.ModuleCdc.MustMarshalJSON(&req.PollKey))),
+				sdk.NewAttribute(types.AttributeKeyVoter, req.Sender.String()),
+			),
+		)
+	}
 
-	if poll.Is(vote.Pending) {
+	switch {
+	case poll.Is(vote.Pending):
 		return &types.VoteResponse{Log: fmt.Sprintf("not enough votes to confirm poll %s yet", poll.GetKey())}, nil
-	}
-
-	if poll.Is(vote.Failed) {
+	case poll.Is(vote.Failed):
 		return &types.VoteResponse{Log: fmt.Sprintf("poll %s failed", poll.GetKey())}, nil
-	}
+	case poll.Is(vote.Expired):
+		return &types.VoteResponse{Log: fmt.Sprintf("poll %s expired", poll.GetKey())}, nil
+	case result != nil:
+		_, ok := result.(*vote.Vote)
+		if !ok {
+			return nil, fmt.Errorf("result of poll %s has wrong type, expected VoteConfirmDepositRequest_Vote, got %T", poll.GetKey().String(), poll.GetResult())
+		}
 
-	_, ok := poll.GetResult().(*vote.Vote)
-	if !ok {
-		return nil, fmt.Errorf("result of poll %s has wrong type, expected VoteConfirmDepositRequest_Vote, got %T", poll.GetKey().String(), poll.GetResult())
-	}
+		if err := voteHandler.HandleResult(ctx, result); err != nil {
+			return &types.VoteResponse{Log: fmt.Sprintf("vote handler failed %s", err.Error())}, nil
+		}
 
-	if err := voteHandler(ctx, poll); err != nil {
-		return &types.VoteResponse{Log: fmt.Sprintf("vote handler failed %s", err.Error())}, nil
+		fallthrough
+	default:
+		return &types.VoteResponse{}, nil
 	}
-
-	return &types.VoteResponse{}, nil
 }

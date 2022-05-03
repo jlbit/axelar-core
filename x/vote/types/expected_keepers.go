@@ -4,11 +4,20 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/axelarnetwork/axelar-core/utils"
 	reward "github.com/axelarnetwork/axelar-core/x/reward/exported"
 	snapshot "github.com/axelarnetwork/axelar-core/x/snapshot/exported"
+	"github.com/axelarnetwork/axelar-core/x/vote/exported"
 )
 
-//go:generate moq -pkg mock -out ./mock/expected_keepers.go . Snapshotter StakingKeeper Rewarder
+//go:generate moq -pkg mock -out ./mock/expected_keepers.go . Voter Snapshotter StakingKeeper Rewarder
+
+// Voter provides vote keeper functionality
+type Voter interface {
+	GetVoteRouter() VoteRouter
+	GetPoll(ctx sdk.Context, key exported.PollKey) exported.Poll
+	GetPollQueue(ctx sdk.Context) utils.GeneralKVQueue
+}
 
 // Snapshotter provides snapshot functionality
 type Snapshotter interface {

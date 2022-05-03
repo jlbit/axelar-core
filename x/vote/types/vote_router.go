@@ -6,6 +6,10 @@ import (
 	"github.com/axelarnetwork/axelar-core/x/vote/exported"
 )
 
+type VoteHandler interface {
+	IsResultEmpty()
+}
+
 // VoteRouter implements a Vote router based on module name.
 type VoteRouter interface {
 	AddHandler(module string, handler exported.VoteHandler) VoteRouter

@@ -6,6 +6,7 @@ package mock
 import (
 	exported "github.com/axelarnetwork/axelar-core/x/vote/exported"
 	"github.com/axelarnetwork/axelar-core/x/vote/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	"sync"
 )
@@ -23,6 +24,9 @@ var _ types.Store = &StoreMock{}
 // 			DeletePollFunc: func()  {
 // 				panic("mock out the DeletePoll method")
 // 			},
+// 			EnqueuePollFunc: func(metadata exported.PollMetadata)  {
+// 				panic("mock out the EnqueuePoll method")
+// 			},
 // 			GetPollFunc: func(key exported.PollKey) exported.Poll {
 // 				panic("mock out the GetPoll method")
 // 			},
@@ -35,10 +39,13 @@ var _ types.Store = &StoreMock{}
 // 			HasVotedFunc: func(voter github_com_cosmos_cosmos_sdk_types.ValAddress) bool {
 // 				panic("mock out the HasVoted method")
 // 			},
+// 			HasVotedLateFunc: func(voter github_com_cosmos_cosmos_sdk_types.ValAddress) bool {
+// 				panic("mock out the HasVotedLate method")
+// 			},
 // 			SetMetadataFunc: func(metadata exported.PollMetadata)  {
 // 				panic("mock out the SetMetadata method")
 // 			},
-// 			SetVoteFunc: func(voter github_com_cosmos_cosmos_sdk_types.ValAddress, vote types.TalliedVote)  {
+// 			SetVoteFunc: func(voter github_com_cosmos_cosmos_sdk_types.ValAddress, data codec.ProtoMarshaler, votingPower int64, isLate bool)  {
 // 				panic("mock out the SetVote method")
 // 			},
 // 		}
@@ -50,6 +57,9 @@ var _ types.Store = &StoreMock{}
 type StoreMock struct {
 	// DeletePollFunc mocks the DeletePoll method.
 	DeletePollFunc func()
+
+	// EnqueuePollFunc mocks the EnqueuePoll method.
+	EnqueuePollFunc func(metadata exported.PollMetadata)
 
 	// GetPollFunc mocks the GetPoll method.
 	GetPollFunc func(key exported.PollKey) exported.Poll
@@ -63,16 +73,24 @@ type StoreMock struct {
 	// HasVotedFunc mocks the HasVoted method.
 	HasVotedFunc func(voter github_com_cosmos_cosmos_sdk_types.ValAddress) bool
 
+	// HasVotedLateFunc mocks the HasVotedLate method.
+	HasVotedLateFunc func(voter github_com_cosmos_cosmos_sdk_types.ValAddress) bool
+
 	// SetMetadataFunc mocks the SetMetadata method.
 	SetMetadataFunc func(metadata exported.PollMetadata)
 
 	// SetVoteFunc mocks the SetVote method.
-	SetVoteFunc func(voter github_com_cosmos_cosmos_sdk_types.ValAddress, vote types.TalliedVote)
+	SetVoteFunc func(voter github_com_cosmos_cosmos_sdk_types.ValAddress, data codec.ProtoMarshaler, votingPower int64, isLate bool)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// DeletePoll holds details about calls to the DeletePoll method.
 		DeletePoll []struct {
+		}
+		// EnqueuePoll holds details about calls to the EnqueuePoll method.
+		EnqueuePoll []struct {
+			// Metadata is the metadata argument value.
+			Metadata exported.PollMetadata
 		}
 		// GetPoll holds details about calls to the GetPoll method.
 		GetPoll []struct {
@@ -92,6 +110,11 @@ type StoreMock struct {
 			// Voter is the voter argument value.
 			Voter github_com_cosmos_cosmos_sdk_types.ValAddress
 		}
+		// HasVotedLate holds details about calls to the HasVotedLate method.
+		HasVotedLate []struct {
+			// Voter is the voter argument value.
+			Voter github_com_cosmos_cosmos_sdk_types.ValAddress
+		}
 		// SetMetadata holds details about calls to the SetMetadata method.
 		SetMetadata []struct {
 			// Metadata is the metadata argument value.
@@ -101,17 +124,23 @@ type StoreMock struct {
 		SetVote []struct {
 			// Voter is the voter argument value.
 			Voter github_com_cosmos_cosmos_sdk_types.ValAddress
-			// Vote is the vote argument value.
-			Vote types.TalliedVote
+			// Data is the data argument value.
+			Data codec.ProtoMarshaler
+			// VotingPower is the votingPower argument value.
+			VotingPower int64
+			// IsLate is the isLate argument value.
+			IsLate bool
 		}
 	}
-	lockDeletePoll  sync.RWMutex
-	lockGetPoll     sync.RWMutex
-	lockGetVote     sync.RWMutex
-	lockGetVotes    sync.RWMutex
-	lockHasVoted    sync.RWMutex
-	lockSetMetadata sync.RWMutex
-	lockSetVote     sync.RWMutex
+	lockDeletePoll   sync.RWMutex
+	lockEnqueuePoll  sync.RWMutex
+	lockGetPoll      sync.RWMutex
+	lockGetVote      sync.RWMutex
+	lockGetVotes     sync.RWMutex
+	lockHasVoted     sync.RWMutex
+	lockHasVotedLate sync.RWMutex
+	lockSetMetadata  sync.RWMutex
+	lockSetVote      sync.RWMutex
 }
 
 // DeletePoll calls DeletePollFunc.
@@ -137,6 +166,37 @@ func (mock *StoreMock) DeletePollCalls() []struct {
 	mock.lockDeletePoll.RLock()
 	calls = mock.calls.DeletePoll
 	mock.lockDeletePoll.RUnlock()
+	return calls
+}
+
+// EnqueuePoll calls EnqueuePollFunc.
+func (mock *StoreMock) EnqueuePoll(metadata exported.PollMetadata) {
+	if mock.EnqueuePollFunc == nil {
+		panic("StoreMock.EnqueuePollFunc: method is nil but Store.EnqueuePoll was just called")
+	}
+	callInfo := struct {
+		Metadata exported.PollMetadata
+	}{
+		Metadata: metadata,
+	}
+	mock.lockEnqueuePoll.Lock()
+	mock.calls.EnqueuePoll = append(mock.calls.EnqueuePoll, callInfo)
+	mock.lockEnqueuePoll.Unlock()
+	mock.EnqueuePollFunc(metadata)
+}
+
+// EnqueuePollCalls gets all the calls that were made to EnqueuePoll.
+// Check the length with:
+//     len(mockedStore.EnqueuePollCalls())
+func (mock *StoreMock) EnqueuePollCalls() []struct {
+	Metadata exported.PollMetadata
+} {
+	var calls []struct {
+		Metadata exported.PollMetadata
+	}
+	mock.lockEnqueuePoll.RLock()
+	calls = mock.calls.EnqueuePoll
+	mock.lockEnqueuePoll.RUnlock()
 	return calls
 }
 
@@ -259,6 +319,37 @@ func (mock *StoreMock) HasVotedCalls() []struct {
 	return calls
 }
 
+// HasVotedLate calls HasVotedLateFunc.
+func (mock *StoreMock) HasVotedLate(voter github_com_cosmos_cosmos_sdk_types.ValAddress) bool {
+	if mock.HasVotedLateFunc == nil {
+		panic("StoreMock.HasVotedLateFunc: method is nil but Store.HasVotedLate was just called")
+	}
+	callInfo := struct {
+		Voter github_com_cosmos_cosmos_sdk_types.ValAddress
+	}{
+		Voter: voter,
+	}
+	mock.lockHasVotedLate.Lock()
+	mock.calls.HasVotedLate = append(mock.calls.HasVotedLate, callInfo)
+	mock.lockHasVotedLate.Unlock()
+	return mock.HasVotedLateFunc(voter)
+}
+
+// HasVotedLateCalls gets all the calls that were made to HasVotedLate.
+// Check the length with:
+//     len(mockedStore.HasVotedLateCalls())
+func (mock *StoreMock) HasVotedLateCalls() []struct {
+	Voter github_com_cosmos_cosmos_sdk_types.ValAddress
+} {
+	var calls []struct {
+		Voter github_com_cosmos_cosmos_sdk_types.ValAddress
+	}
+	mock.lockHasVotedLate.RLock()
+	calls = mock.calls.HasVotedLate
+	mock.lockHasVotedLate.RUnlock()
+	return calls
+}
+
 // SetMetadata calls SetMetadataFunc.
 func (mock *StoreMock) SetMetadata(metadata exported.PollMetadata) {
 	if mock.SetMetadataFunc == nil {
@@ -291,33 +382,41 @@ func (mock *StoreMock) SetMetadataCalls() []struct {
 }
 
 // SetVote calls SetVoteFunc.
-func (mock *StoreMock) SetVote(voter github_com_cosmos_cosmos_sdk_types.ValAddress, vote types.TalliedVote) {
+func (mock *StoreMock) SetVote(voter github_com_cosmos_cosmos_sdk_types.ValAddress, data codec.ProtoMarshaler, votingPower int64, isLate bool) {
 	if mock.SetVoteFunc == nil {
 		panic("StoreMock.SetVoteFunc: method is nil but Store.SetVote was just called")
 	}
 	callInfo := struct {
-		Voter github_com_cosmos_cosmos_sdk_types.ValAddress
-		Vote  types.TalliedVote
+		Voter       github_com_cosmos_cosmos_sdk_types.ValAddress
+		Data        codec.ProtoMarshaler
+		VotingPower int64
+		IsLate      bool
 	}{
-		Voter: voter,
-		Vote:  vote,
+		Voter:       voter,
+		Data:        data,
+		VotingPower: votingPower,
+		IsLate:      isLate,
 	}
 	mock.lockSetVote.Lock()
 	mock.calls.SetVote = append(mock.calls.SetVote, callInfo)
 	mock.lockSetVote.Unlock()
-	mock.SetVoteFunc(voter, vote)
+	mock.SetVoteFunc(voter, data, votingPower, isLate)
 }
 
 // SetVoteCalls gets all the calls that were made to SetVote.
 // Check the length with:
 //     len(mockedStore.SetVoteCalls())
 func (mock *StoreMock) SetVoteCalls() []struct {
-	Voter github_com_cosmos_cosmos_sdk_types.ValAddress
-	Vote  types.TalliedVote
+	Voter       github_com_cosmos_cosmos_sdk_types.ValAddress
+	Data        codec.ProtoMarshaler
+	VotingPower int64
+	IsLate      bool
 } {
 	var calls []struct {
-		Voter github_com_cosmos_cosmos_sdk_types.ValAddress
-		Vote  types.TalliedVote
+		Voter       github_com_cosmos_cosmos_sdk_types.ValAddress
+		Data        codec.ProtoMarshaler
+		VotingPower int64
+		IsLate      bool
 	}
 	mock.lockSetVote.RLock()
 	calls = mock.calls.SetVote
