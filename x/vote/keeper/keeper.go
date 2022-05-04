@@ -69,7 +69,7 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 
 func (k Keeper) initializePoll(ctx sdk.Context, key exported.PollKey, voters []exported.Voter, pollProperties ...exported.PollProperty) error {
 	metadata := types.NewPollMetaData(key, k.GetParams(ctx).DefaultVotingThreshold, voters).With(pollProperties...)
-	poll := types.NewPoll(ctx, metadata, k.newPollStore(ctx, metadata.Key)).WithLogger(k.Logger(ctx))
+	poll := types.NewPoll(metadata, k.newPollStore(ctx, metadata.Key)).WithLogger(k.Logger(ctx))
 
 	return poll.Initialize(ctx.BlockHeight())
 }
@@ -113,7 +113,7 @@ func (k Keeper) GetPoll(ctx sdk.Context, pollKey exported.PollKey) exported.Poll
 		return &types.Poll{PollMetadata: exported.PollMetadata{State: exported.NonExistent}}
 	}
 
-	poll := types.NewPoll(ctx, metadata, k.newPollStore(ctx, metadata.Key)).WithLogger(k.Logger(ctx))
+	poll := types.NewPoll(metadata, k.newPollStore(ctx, metadata.Key)).WithLogger(k.Logger(ctx))
 
 	return poll
 }

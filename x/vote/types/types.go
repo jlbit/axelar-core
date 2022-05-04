@@ -91,7 +91,7 @@ type Store interface {
 }
 
 // NewPoll creates a new poll
-func NewPoll(ctx sdk.Context, meta exported.PollMetadata, store Store) *Poll {
+func NewPoll(meta exported.PollMetadata, store Store) *Poll {
 	return &Poll{
 		PollMetadata: meta,
 		Store:        store,
