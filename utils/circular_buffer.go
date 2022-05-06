@@ -21,7 +21,7 @@ func (m *CircularBuffer) Add(value uint32) {
 		m.shrink()
 	}
 	if m.isFull() && m.isLTMaxSize() {
-		m.increaseBufferSize()
+		m.grow()
 	}
 
 	prevValue := m.CumulativeValue[m.Index]
@@ -74,7 +74,7 @@ func (m CircularBuffer) isLTMaxSize() bool {
 }
 
 // double buffer size until it reaches max size. If max size is not a power of 2 limit the last increase to max size
-func (m *CircularBuffer) increaseBufferSize() {
+func (m *CircularBuffer) grow() {
 	newBuffer := make([]uint64, math.Min(len(m.CumulativeValue)<<1, int(m.MaxSize)))
 
 	// there is no information about the count outside the buffer range, so when the new buffer gets padded with zeroes
